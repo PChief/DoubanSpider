@@ -45,7 +45,7 @@ class DouBanMovie(CrawlSpider):
     def parse_subject(self, response):
         # parse movie root url like https://movie.douban.com/subject/1292052/
         # call parse_profile to create dir ,file, extract profile info and save them
-        suject = self.parse(self, response)
+        suject = self.parse_profile(response)
         subject.create_dir_file()
 
         print response.url
@@ -60,24 +60,20 @@ class DouBanMovie(CrawlSpider):
         movie_name = title_year[0]
         dir_name = rank + '--' + title    #  No.1--肖申克的救赎 The Shawshank Redemption (1994)
 
+        info = response.xpath('//*[@id="info"]').extract()[0] # id=info 页面源码
+
         grade_xpath = '/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/div[1]/div[2]/strong/text()'
         grade = response.xpath(grade_xpath).extract()[0] # u'9.6'  pass to class SetMovieFile
-        grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0]
+        # 豆瓣评分以及分布情况，页面源码部分
+        grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0] 
 
-        info = response.xpath('//*[@id="info"]').extract()[0] # id=info
-        info = self.parse_info(info_cont=info)  # diractor, actor
         
-        subject = SetMovieFile(dir_name, movie_name, subject, grade, info)
+        intro_xpath = '//*[@id="content"]/div[2]/div[1]/div[3]'
+        intro_con = response.xpath(intro_xpath).extract()[0]
+        
+        subject = SetMovieFile(dir_name, movie_name, subject, info, grade, grade_con, intro_con)
         return subject
     
-    def parse_info(info_cont):
-        info = ''  # extract data from info_cont
-        return info
-
-
-    def parse_synopsis(self):
-        # parse movie synopsis
-        pass
 
     def parse_next(self, response):
         # parse next pages , just access and Rule will process
@@ -133,16 +129,48 @@ class DouBanMovie(CrawlSpider):
 
 # get movie name ,dir_name , subject number etc, make dir and file
 class SetMovieFile():
-    def __init__(self, dir_name, movie_name, subject, grade, info):
+    def __init__(self, dir_name, movie_name, subject, info, grade, grade_con, intro_con):
+        self.dir_name = dir_name
         self.movie_name = movie_name
         self.subject = subject
-        self.dir_name = dir_name
-
+        self.info = info
+        self.grade = grade
+        self.grade_con = grade_con
+        self.intro_con = intro_con
+        
     def create_dir_file(self):
         if not os.path.exists(self.dir_name):
             os.mkdir(self.dir_name, mode=0o777)
+        
+        # 创建电影简介.txt， 提取内容（演职人员，剧情简介），写入文件
         intro_file_name = self.dir_name + '/' +  self.movie_name + '简介.txt'
-        self.intro = open(intro_file_name, 'a', encoding='utf8')
+        intro_file = open(intro_file_name, 'a')
+        #   演职人员介绍, parse_info 
+        info = remove_tags(self.info) + '\n'
+        intro_file.write(info)
+        
+        #   剧情简介 parse_intro
+        intro_content = remove_tags(self.intro_con)
+        intro_file.write(intro_conten)
+        intro_file.close()
+        
+        
+        ## 电影评分(9.6).txt
+        grade_file_name = ‘豆瓣评分’ + '(' + str(self.grade) + ').txt'
+        grade = open(grade_file_name, 'a')
+        grade_content = remove_tags(self.grade_con).replace(' ', '')
+        grade_content = grade_content.replace(u'\u661f\n\n\n', u'\u661f:') # 5星:81.4%
+        grade.write(grade_content)
+        grade.close()
+        
+    def parse_info(info_cont):
+        info = ''  # extract data from info_cont
+        return info
+    
+    def parse_grade(self, grade_con=''):
+        content = grade_con
+        cleaned_data = ''
+        return cleaned_data
 
 
 process = CrawlerProcess()
