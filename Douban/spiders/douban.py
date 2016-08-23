@@ -41,9 +41,12 @@ class DouBanMovie(CrawlSpider):
     )
 
     # from top to end, extract profile, photos, awards, reviews in order
-    # 1st : extract profile info ,create file , save it
+    # 1st Step: extract profile info ,create file , save it
     def parse_subject(self, response):
         # parse movie root url like https://movie.douban.com/subject/1292052/
+        # call parse_profile to create dir ,file, extract profile info and save them
+        suject = self.parse(self, response)
+        subject.create_dir_file()
 
         print response.url
 
@@ -58,10 +61,18 @@ class DouBanMovie(CrawlSpider):
         dir_name = rank + '--' + title    #  No.1--肖申克的救赎 The Shawshank Redemption (1994)
 
         grade_xpath = '/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/div[1]/div[2]/strong/text()'
-        grade = response.xpath(grade_xpath).extract()[0] # unicode
+        grade = response.xpath(grade_xpath).extract()[0] # u'9.6'  pass to class SetMovieFile
         grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0]
 
         info = response.xpath('//*[@id="info"]').extract()[0] # id=info
+        info = self.parse_info(info_cont=info)  # diractor, actor
+        
+        subject = SetMovieFile(dir_name, movie_name, subject, grade, info)
+        return subject
+    
+    def parse_info(info_cont):
+        info = ''  # extract data from info_cont
+        return info
 
 
     def parse_synopsis(self):
@@ -73,12 +84,12 @@ class DouBanMovie(CrawlSpider):
         print response.url
 
 
-    # 2nd : extract photos, create directory , download and save images
+    # 2nd  Step: extract photos, create directory , download and save images
     def parse_photos(self, response):
         print response.url
 
 
-    # 3rd : extract awards ,  create file , save it
+    # 3rd  Step: extract awards ,  create file , save it
     def parse_awards(self, response):
         # parse awards
         content_xpath = '/html/body/div[3]/div[1]'
@@ -86,7 +97,7 @@ class DouBanMovie(CrawlSpider):
         print remove_tags(content)
 
 
-    # 4th : extract reviews , create file, save it
+    # 4th  Step: extract reviews , create file, save it
     def parse_reviews(self, response):
         # Every movie has N resviews, then N%20 + [0,1] pages
         print response.url
@@ -120,17 +131,17 @@ class DouBanMovie(CrawlSpider):
     def parse_review_start(self, response):
         print response.url
 
-
-class MovieFile():
-    def __init__(self, dir_name, moviename, subject,):
-        self.moviename = moviename
+# get movie name ,dir_name , subject number etc, make dir and file
+class SetMovieFile():
+    def __init__(self, dir_name, movie_name, subject, grade, info):
+        self.movie_name = movie_name
         self.subject = subject
         self.dir_name = dir_name
 
     def create_dir_file(self):
         if not os.path.exists(self.dir_name):
             os.mkdir(self.dir_name, mode=0o777)
-        intro_file_name = self.dir_name + '/' +  self.moviename + '简介.txt'
+        intro_file_name = self.dir_name + '/' +  self.movie_name + '简介.txt'
         self.intro = open(intro_file_name, 'a', encoding='utf8')
 
 
