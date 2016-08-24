@@ -33,14 +33,14 @@ class DouBanMovie(CrawlSpider):
     def parse_subject(self, response):
         # parse movie root url like https://movie.douban.com/subject/1292052/
         # call parse_profile to create dir ,file, extract profile info and save them
-        suject = self.parse_profile(response)
-        subject.create_dir_file()
+        subject = self.parse_profile(response)
+        subject.create_root_dir()
         print response.url
         # create urls base on response.url(https://movie.douban.com/subject/1292052/)
         all_photos_url = response.url + 'all_photos' # https://movie.douban.com/subject/1292052/all_photos
         awards_url  = response.url + 'awards'   # https://movie.douban.com/subject/1292052/awards/
         reviews_url = response.url + 'reviews'  # https://movie.douban.com/subject/1292052/reviews
-        rqst_all_photos = Request(url=all_photos_url, callback=self.parse_all_photos)
+        rqst_all_photos = scrapy.Request(url=all_photos_url, callback=self.parse_all_photos)
         subject.create_photos_dir()
         rqst_all_photos.meta['photos_dir'] = subject.photos_dir
 
@@ -124,7 +124,6 @@ class SetMovieFile():
     def __init__(self, dir_name, movie_name, info, grade, grade_con, intro_con):
         self.dir_name = dir_name
         self.movie_name = movie_name
-        self.subject = subject
         self.info = info
         self.grade = grade
         self.grade_con = grade_con
@@ -147,11 +146,11 @@ class SetMovieFile():
         intro_file.write(info)
         #   剧情简介 parse_intro
         intro_content = remove_tags(self.intro_con)
-        intro_file.write(intro_conten)
+        intro_file.write(intro_content)
         intro_file.close()
         
         ## 电影评分(9.6).txt 提取链接稍微麻烦，不是重点，暂不处理
-        grade_file_name = ‘豆瓣评分’ + '(' + str(self.grade) + ').txt'
+        grade_file_name = '豆瓣评分' + '(' + str(self.grade) + ').txt'
         grade = open(grade_file_name, 'a')
         grade_content = remove_tags(self.grade_con).replace(' ', '')       # 去除多余空格
         grade_content = grade_content.replace(u'\u661f\n\n\n', u'\u661f:') # 去除多余换行，保留部分 5星:81.4%
@@ -162,7 +161,7 @@ class SetMovieFile():
     def create_photos_dir(self, ):
         self.photos_dir = self.dir_name + '/' + 'photos'
         if not os.path.exists(self.photos_dir):
-            os.mkdir(photos_dir)
+            os.mkdir(self.photos_dir)
     
     def create_wards_file(self, ):
         awards_file_name = self.dir_name + '/' + self.movie_name + '获奖情况.txt'
@@ -173,7 +172,7 @@ class SetMovieFile():
         if not os.path.exists(self.reviews_dir):
             os.mkdir(self.reviews_dir)
         review_list = ['一星影评.txt', '二星影评.txt', '三星影评.txt', '四星影评.txt', '五星影评.txt',]
-        self.reviews = [open(self.reviews_dir + rvwls, 'a') for fvwls in review_list] # 调用的时候先判断下位置
+        self.reviews = [open(self.reviews_dir + rvwls, 'a') for rvwls in review_list] # 调用的时候先判断下位置
         
 process = CrawlerProcess()
 process.crawl(DouBanMovie)
