@@ -40,6 +40,9 @@ class DouBanMovie(CrawlSpider):
         all_photos_url = response.url + 'all_photos' # https://movie.douban.com/subject/1292052/all_photos
         awards_url  = response.url + 'awards'   # https://movie.douban.com/subject/1292052/awards/
         reviews_url = response.url + 'reviews'  # https://movie.douban.com/subject/1292052/reviews
+        rqst_all_photos = Request(url=all_photos_url, callback=self.parse_all_photos)
+        subject.create_photos_dir()
+        rqst_all_photos.meta['photos_dir'] = subject.photos_dir
 
     def parse_profile(self, response):
         # parse movie profile like Director,Actor ,extact name,links etc
@@ -56,8 +59,7 @@ class DouBanMovie(CrawlSpider):
         grade_xpath = '/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/div[1]/div[2]/strong/text()'
         grade = response.xpath(grade_xpath).extract()[0] # u'9.6'  pass to class SetMovieFile
         # 豆瓣评分以及分布情况，页面源码部分
-        grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0] 
-
+        grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0]
         
         intro_xpath = '//*[@id="content"]/div[2]/div[1]/div[3]'
         intro_con = response.xpath(intro_xpath).extract()[0]
@@ -65,14 +67,12 @@ class DouBanMovie(CrawlSpider):
         subject = SetMovieFile(dir_name, movie_name, info, grade, grade_con, intro_con)
         return subject
     
-
     def parse_next(self, response):
         # parse next pages , just access and Rule will process
         print response.url
 
-
     # 2nd  Step: extract photos, create directory , download and save images
-    def parse_photos(self, response):
+    def parse_all_photos(self, response):
         print response.url
 
 
@@ -87,6 +87,8 @@ class DouBanMovie(CrawlSpider):
     # 4th  Step: extract reviews , create file, save it
     def parse_reviews(self, response):
         # Every movie has N resviews, then N%20 + [0,1] pages
+        # 后面有很多空白页，可能是为了填充页数，体现数量，在古诗文网页遇到过
+        # 如：肖申克的救赎有4008个影评。但实际只到185页，共3700个影评。所以需要判断、过滤
         print response.url
         base_url = response.url + '?start='
 
@@ -105,7 +107,6 @@ class DouBanMovie(CrawlSpider):
             url = base_url + tail_url
             yield scrapy.Request(url=url, callback=self.parse_review_start)
             page += 1
-
 
     def parse_pre_firm_review(self):
         # preprocess firm review, extact all the review urls included the next pages
