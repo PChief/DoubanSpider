@@ -128,6 +128,9 @@ class SetMovieFile():
         self.grade = grade
         self.grade_con = grade_con
         self.intro_con = intro_con
+        self.photos_dir = ''
+        self.awards_file = ''
+        self.reviews_dir = ''
         
     def create_dir_file(self):
         if not os.path.exists(self.dir_name):
@@ -154,13 +157,21 @@ class SetMovieFile():
         grade.close()
     # 生成图片保存目录 ./photos， 生成奖项介绍 获奖情况.txt ， 生成影评文件夹 ./影评
     def create_photos_dir(self, ):
-        pass
+        self.photos_dir = self.dir_name + '/' + 'photos'
+        if not os.path.exists(self.photos_dir):
+            os.mkdir(photos_dir)
     
     def create_wards_file(self, ):
-        pass
+        awards_file_name = self.dir_name + '/' + self.movie_name + '获奖情况.txt'
+        self.awards_file = open(awards_file_name, 'a')
     
-    def create_reviews_dir(self, ):
-        pass
+    def create_reviews_dir_files(self, ):
+        self.reviews_dir = self.dir_name + '/' + 'reviews'
+        if not os.path.exists(self.reviews_dir):
+            os.mkdir(self.reviews_dir)
+        self.five_stars_reviews = open(self.reviews_dir + '五星影评.txt'， 'a')
+        self.five_stars_reviews = open(self.reviews_dir + '五星影评.txt'， 'a')
+        self.five_stars_reviews = open(self.reviews_dir + '五星影评.txt'， 'a')
         
 process = CrawlerProcess()
 process.crawl(DouBanMovie)
