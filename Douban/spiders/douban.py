@@ -36,13 +36,33 @@ class DouBanMovie(CrawlSpider):
         subject = self.parse_profile(response)
         subject.create_root_dir()
         print response.url
-        # create urls base on response.url(https://movie.douban.com/subject/1292052/)
-        all_photos_url = response.url + 'all_photos' # https://movie.douban.com/subject/1292052/all_photos
-        awards_url  = response.url + 'awards'   # https://movie.douban.com/subject/1292052/awards/
-        reviews_url = response.url + 'reviews'  # https://movie.douban.com/subject/1292052/reviews
-        rqst_all_photos = scrapy.Request(url=all_photos_url, callback=self.parse_all_photos)
+
+        ## create urls base on response.url(https://movie.douban.com/subject/1292052/), request them
+        # create all_photos url , request it
+        # 剧照 https://movie.douban.com/subject/1292052/photos?type=S
+        stills_photos_url = response.url + 'photos?type=S'
+        rqst_stills_photos = scrapy.Request(url=stills_photos_url, callback=self.parse_photos)
+        # 海报 https://movie.douban.com/subject/1292052/photos?type=R
+        poster_photos_url = response.url + 'photos?type=R'
+        rqst_poster_photos = scrapy.Request(url=poster_photos_url, callback=self.parse_photos)
+        # 壁纸 https://movie.douban.com/subject/1292052/photos?type=W
+        wallpaper_photos_url = response.url + 'photos?type=W'
+        rqst_wallpaper_photos = scrapy.Request(url=wallpaper_photos_url, callback=self.parse_photos)
         subject.create_photos_dir()
-        rqst_all_photos.meta['photos_dir'] = subject.photos_dir
+        rqst_stills_photos.meta['photos_dir'] = subject.photos_dir
+        rqst_poster_photos.meta['photos_dir'] = subject.photos_dir
+        rqst_wallpaper_photos.meta['photos_dir'] = subject.photos_dir
+        # create awards url , request it
+        awards_url  = response.url + 'awards'   # https://movie.douban.com/subject/1292052/awards/
+        subject.create_wards_file()
+        rqst_awards = scrapy.Request(url=awards_url, callback=self.parse_awards)
+        rqst_awards.meta['awards_file'] = subject.awards_file
+        # create reviews url , request it
+        reviews_url = response.url + 'reviews'  # https://movie.douban.com/subject/1292052/reviews
+        subject.create_reviews_dir_files()
+        rqst_reviews = scrapy.Request(url=reviews_url, callback=self.parse_reviews)
+        return rqst_stills_photos, rqst_poster_photos, rqst_wallpaper_photos, rqst_awards, rqst_reviews
+
 
     def parse_profile(self, response):
         # parse movie profile like Director,Actor ,extact name,links etc
@@ -72,7 +92,9 @@ class DouBanMovie(CrawlSpider):
         print response.url
 
     # 2nd  Step: extract photos, create directory , download and save images
-    def parse_all_photos(self, response):
+    def parse_photos(self, response):
+        # 提取当前页面的图片链接，替换为原始图片链接，发送请求，以二进制形式保存
+        # 判断是否还有下一页，若有则调用上述函数继续处理
         print response.url
 
 
