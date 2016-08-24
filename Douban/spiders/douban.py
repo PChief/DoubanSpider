@@ -62,7 +62,7 @@ class DouBanMovie(CrawlSpider):
         intro_xpath = '//*[@id="content"]/div[2]/div[1]/div[3]'
         intro_con = response.xpath(intro_xpath).extract()[0]
         
-        subject = SetMovieFile(dir_name, movie_name, subject, info, grade, grade_con, intro_con)
+        subject = SetMovieFile(dir_name, movie_name, info, grade, grade_con, intro_con)
         return subject
     
 
@@ -120,7 +120,7 @@ class DouBanMovie(CrawlSpider):
 
 # get movie name ,dir_name , subject number etc, make dir and file
 class SetMovieFile():
-    def __init__(self, dir_name, movie_name, subject, info, grade, grade_con, intro_con):
+    def __init__(self, dir_name, movie_name, info, grade, grade_con, intro_con):
         self.dir_name = dir_name
         self.movie_name = movie_name
         self.subject = subject
@@ -132,13 +132,15 @@ class SetMovieFile():
         self.awards_file = ''
         self.reviews_dir = ''
         
-    def create_dir_file(self):
+    def create_root_dir(self):
         if not os.path.exists(self.dir_name):
             os.mkdir(self.dir_name, mode=0o777)
-        
+    
+    def save_info_intro_grade(self):    
         # 创建电影简介.txt， 提取内容（演职人员，剧情简介），写入文件
         intro_file_name = self.dir_name + '/' +  self.movie_name + '简介.txt'
         intro_file = open(intro_file_name, 'a')
+        
         #   演职人员介绍, parse_info 
         info = remove_tags(self.info) + '\n' + '#'*99 + '\n'
         intro_file.write(info)
@@ -147,7 +149,6 @@ class SetMovieFile():
         intro_file.write(intro_conten)
         intro_file.close()
         
-        
         ## 电影评分(9.6).txt 提取链接稍微麻烦，不是重点，暂不处理
         grade_file_name = ‘豆瓣评分’ + '(' + str(self.grade) + ').txt'
         grade = open(grade_file_name, 'a')
@@ -155,6 +156,7 @@ class SetMovieFile():
         grade_content = grade_content.replace(u'\u661f\n\n\n', u'\u661f:') # 去除多余换行，保留部分 5星:81.4%
         grade.write(grade_content)
         grade.close()
+        
     # 生成图片保存目录 ./photos， 生成奖项介绍 获奖情况.txt ， 生成影评文件夹 ./影评
     def create_photos_dir(self, ):
         self.photos_dir = self.dir_name + '/' + 'photos'
@@ -169,9 +171,8 @@ class SetMovieFile():
         self.reviews_dir = self.dir_name + '/' + 'reviews'
         if not os.path.exists(self.reviews_dir):
             os.mkdir(self.reviews_dir)
-        self.five_stars_reviews = open(self.reviews_dir + '五星影评.txt'， 'a')
-        self.five_stars_reviews = open(self.reviews_dir + '五星影评.txt'， 'a')
-        self.five_stars_reviews = open(self.reviews_dir + '五星影评.txt'， 'a')
+        review_list = ['一星影评.txt', '二星影评.txt', '三星影评.txt', '四星影评.txt', '五星影评.txt',]
+        self.reviews = [open(self.reviews_dir + rvwls, 'a') for fvwls in review_list] # 调用的时候先判断下位置
         
 process = CrawlerProcess()
 process.crawl(DouBanMovie)
