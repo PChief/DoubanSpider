@@ -26,18 +26,6 @@ class DouBanMovie(CrawlSpider):
         # next page links, extract movie link for parse_subject
         Rule(LinkExtractor(allow='\?start=[0-9]*&filter=', deny='.*baidu.com', ),
              callback='parse_next', follow=True),
-
-        # parse all_photos, extract all photos
-        # Rule(LinkExtractor(allow=potos_url, deny='.*baidu.com', ),
-        #      callback='parse_photos', follow=True),
-
-        # parse awards, extract awards
-        # Rule(LinkExtractor(allow='/subject/[0-9]*/awards', deny='.*baidu.com', ),
-        #      callback='parse_awards', follow=True),
-
-        # parse reviews, extract review
-        # Rule(LinkExtractor(allow='movie\.douban\.com/subject/[0-9]*/reviews$', deny='.*baidu.com', ),
-        #      callback='parse_reviews',),
     )
 
     # from top to end, extract profile, photos, awards, reviews in order
@@ -47,8 +35,11 @@ class DouBanMovie(CrawlSpider):
         # call parse_profile to create dir ,file, extract profile info and save them
         suject = self.parse_profile(response)
         subject.create_dir_file()
-
         print response.url
+        # create urls base on response.url(https://movie.douban.com/subject/1292052/)
+        all_photos_url = response.url + 'all_photos' # https://movie.douban.com/subject/1292052/all_photos
+        awards_url  = response.url + 'awards'   # https://movie.douban.com/subject/1292052/awards/
+        reviews_url = response.url + 'reviews'  # https://movie.douban.com/subject/1292052/reviews
 
     def parse_profile(self, response):
         # parse movie profile like Director,Actor ,extact name,links etc
@@ -146,33 +137,31 @@ class SetMovieFile():
         intro_file_name = self.dir_name + '/' +  self.movie_name + '简介.txt'
         intro_file = open(intro_file_name, 'a')
         #   演职人员介绍, parse_info 
-        info = remove_tags(self.info) + '\n'
+        info = remove_tags(self.info) + '\n' + '#'*99 + '\n'
         intro_file.write(info)
-        
         #   剧情简介 parse_intro
         intro_content = remove_tags(self.intro_con)
         intro_file.write(intro_conten)
         intro_file.close()
         
         
-        ## 电影评分(9.6).txt
+        ## 电影评分(9.6).txt 提取链接稍微麻烦，不是重点，暂不处理
         grade_file_name = ‘豆瓣评分’ + '(' + str(self.grade) + ').txt'
         grade = open(grade_file_name, 'a')
-        grade_content = remove_tags(self.grade_con).replace(' ', '')
-        grade_content = grade_content.replace(u'\u661f\n\n\n', u'\u661f:') # 5星:81.4%
+        grade_content = remove_tags(self.grade_con).replace(' ', '')       # 去除多余空格
+        grade_content = grade_content.replace(u'\u661f\n\n\n', u'\u661f:') # 去除多余换行，保留部分 5星:81.4%
         grade.write(grade_content)
         grade.close()
-        
-    def parse_info(info_cont):
-        info = ''  # extract data from info_cont
-        return info
+    # 生成图片保存目录 ./photos， 生成奖项介绍 获奖情况.txt ， 生成影评文件夹 ./影评
+    def create_photos_dir(self, ):
+        pass
     
-    def parse_grade(self, grade_con=''):
-        content = grade_con
-        cleaned_data = ''
-        return cleaned_data
-
-
+    def create_wards_file(self, ):
+        pass
+    
+    def create_reviews_dir(self, ):
+        pass
+        
 process = CrawlerProcess()
 process.crawl(DouBanMovie)
 process.start()
