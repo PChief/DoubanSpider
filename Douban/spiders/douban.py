@@ -92,9 +92,15 @@ class DouBanMovie(CrawlSpider):
         # 豆瓣评分以及分布情况，页面源码部分
         grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0]
         
-        intro_xpath = '//*[@id="content"]/div[2]/div[1]/div[3]'
-        intro_con = response.xpath(intro_xpath).extract()[0]
-        
+        intro_xpath = '//*[@id="link-report"]/span[@class="all hidden"]/text()'
+        intro_content = response.xpath(intro_xpath).extract()  #有的简介比较长，处于隐藏状态
+        intro_con = ''
+        if intro_content:
+            for intro_co in intro_content:
+                intro_con = intro_con + intro_co
+        else:
+            intro_xpath = '//*[@id="content"]/div[2]/div[1]/div[3]'
+            intro_con = response.xpath(intro_xpath).extract()[0]
         subject = SetMovieFile(dir_name, movie_name, info, grade, grade_con, intro_con)
         return subject
 

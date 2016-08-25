@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b611eb51-dee8-4e89-bef5-6a3bf9a2f026" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/DoubanSpider.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Douban/spiders/douban.py" afterPath="$PROJECT_DIR$/Douban/spiders/douban.py" />
     </list>
     <ignored path="DoubanSpider.iws" />
@@ -30,8 +27,8 @@
       <file leaf-file-name="douban.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Douban/spiders/douban.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5605">
-              <caret line="295" column="15" selection-start-line="295" selection-start-column="15" selection-end-line="295" selection-end-column="15" />
+            <state relative-caret-position="75">
+              <caret line="77" column="21" selection-start-line="77" selection-start-column="8" selection-end-line="77" selection-end-column="21" />
               <folding>
                 <element signature="e#23#36#0" expanded="true" />
               </folding>
@@ -44,6 +41,7 @@
   <component name="Git.Settings">
     <option name="PREVIOUS_COMMIT_AUTHORS">
       <list>
+        <option value="PChief" />
         <option value="Mikky" />
       </list>
     </option>
@@ -448,16 +446,23 @@
       <option name="project" value="LOCAL" />
       <updated>1472055707473</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="1、删除Rule规则，添加登陆模块&#10;2、完成parse_photos、parse_reviews等函数编写&#10;3、按照PEP8规范改进代码风格&#10;4、下一步，调试代码">
+      <created>1472143680605</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1472143680605</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="0" width="1924" height="1047" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23444206" sideWeight="0.49507734" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32719395" sideWeight="0.4936034" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1892779" sideWeight="0.3277897" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1892779" sideWeight="0.3277897" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1417749" sideWeight="0.4512894" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2549234" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1892779" sideWeight="0.6722103" order="2" side_tool="false" content_ui="tabs" />
@@ -499,8 +504,8 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/Douban/spiders/douban.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5605">
-          <caret line="295" column="15" selection-start-line="295" selection-start-column="15" selection-end-line="295" selection-end-column="15" />
+        <state relative-caret-position="75">
+          <caret line="77" column="21" selection-start-line="77" selection-start-column="8" selection-end-line="77" selection-end-column="21" />
           <folding>
             <element signature="e#23#36#0" expanded="true" />
           </folding>
