@@ -93,9 +93,42 @@ class DouBanMovie(CrawlSpider):
 
     # 2nd  Step: extract photos, create directory , download and save images
     def parse_photos(self, response):
-        # 提取当前页面的图片链接，替换为原始图片链接，发送请求，以二进制形式保存
-        # 判断是否还有下一页，若有则调用上述函数继续处理
+        """
+        1st Step: 提取当前页面的图片链接，替换为原始图片链接，发送请求，以二进制形式保存
+            1st step: class="poster-col4 clearfix"  xpath='//*[@id="content"]/div/div[1]/ul[@class="poster-col4 clearfix"]'
+                img_src_xpath = poster_col4.xpath + '//img/@src'
+                              = '//*[@id="content"]/div/div[1]/ul[@class="poster-col4 clearfix"]//img/@src'
+            访问原始图片需要登录！！！
+        2nd Step: 判断是否还有下一页，若有则调用上述函数继续处理
+            2nd step: class= "paginator" xpath='//*[@id="content"]/div/div[1]/div[@class="paginator"]'
+                next page link xpath = pageinator.xpath + '//span[@class="next"]/@href'
+                                       '//*[@id="content"]/div/div[1]/div[@class="paginator"]//span[@class="next"]/@href'
+        """
         print response.url
+        # 1st step
+        img_src_xpath = '//*[@id="content"]/div/div[1]/ul[@class="poster-col4 clearfix"]//img/@src'
+        img_src_list = response.xpath(img_src_xpath).extract()
+        self.parse_img_src_list(img_src_list=img_src_list, path=response.meta['photos_dir'])
+        # 2nd step
+        next_page_link_xpath = '//*[@id="content"]/div/div[1]/div[@class="paginator"]//span[@class="next"]/@href'
+        next_page_link = response.xpath(next_page_link_path).extract()[0]
+        if next_page_link not None:
+            rqst_next = scrapy.Request(url=next_page_link, callback=self.parse_photos) # 递归调用 parse_photos
+            rqst_next.meta['photos_dir'] = response.meta['photos_dir']
+            return rqst_next
+    
+    def parse_img_src_list(self, img_src_list=None, path=None):
+        for img_url in img_src_list:
+            # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
+            # ====>
+            # https://img3.doubanio.com/view/photo/raw/public/p490571815.jpg
+            raw_img_url = img_url.replace(u'thumb', u'raw')
+            rqst_raw_img = scrapy.Request(raw_img_url, callback=self.save_img)
+            rqst_raw_img.meta['path'] = path
+    def save_img(self, response):
+        path = response.meta['path']
+        img_file_name = response.url.split('/')[-1:][0]
+            
 
 
     # 3rd  Step: extract awards ,  create file , save it
