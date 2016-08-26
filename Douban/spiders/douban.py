@@ -21,9 +21,10 @@ class DouBanMovie(CrawlSpider):
 
     def loged_in(self, response):
         print response.url
-        start_url = 'https://movie.douban.com/top250'  # all urls , commented when test single movie
-        # start_url = 'https://movie.douban.com/subject/1292052/'
-        return scrapy.Request(url=start_url, callback=self.parse_start_url)
+        # start_url = 'https://movie.douban.com/top250'  # all urls , commented when test single movie
+        start_url = 'https://movie.douban.com/subject/1292052/'
+        # return scrapy.Request(url=start_url, callback=self.parse_start_url)
+        return scrapy.Request(url=start_url, callback=self.parse_subject)
 
     def parse_start_url(self, response):
         # 获取的页面由Rule规则匹配处理
@@ -35,6 +36,7 @@ class DouBanMovie(CrawlSpider):
 
         next_page_link_xpath = '//span[@class="next"]/a/@href'
         next_page_link = response.xpath(next_page_link_xpath).extract()[0]
+        next_page_link = response.url + next_page_link
         if next_page_link:
             yield scrapy.Request(url=next_page_link, callback=self.parse_start_url)  # 递归调用 parse_start_url
 
@@ -45,6 +47,7 @@ class DouBanMovie(CrawlSpider):
         # call parse_profile to create dir ,file, extract profile info and save them
         subject = self.parse_profile(response)
         subject.create_root_dir()
+        subject.save_info_intro_grade()
         print response.url
 
         # create urls base on response.url(https://movie.douban.com/subject/1292052/), request them
@@ -122,43 +125,55 @@ class DouBanMovie(CrawlSpider):
         # 1st step
         img_src_xpath = '//*[@id="content"]/div/div[1]/ul[@class="poster-col4 clearfix"]//img/@src'
         img_src_list = response.xpath(img_src_xpath).extract()
-        self.parse_img_src_list(img_src_list=img_src_list, path=response.meta['photos_dir'])
-        # 2nd step
-        next_page_link_xpath = '//span[@class="next"]/a/@href'
-        next_page_link = response.xpath(next_page_link_xpath).extract()[0]
-        if next_page_link:
-            rqst_next = scrapy.Request(url=next_page_link, callback=self.parse_photos)  # 递归调用 parse_photos
-            rqst_next.meta['photos_dir'] = response.meta['photos_dir']
-            return rqst_next
-
-    def parse_img_src_list(self, img_src_list=None, path=None):
+        print 'img_src_list length::::::', len(img_src_list)
+        path = response.meta['photos_dir']
+        print 'photoes_dir ::::::',path
+        # self.parse_img_src_list(img_src_list=img_src_list, path=response.meta['photos_dir'])
         for img_url in img_src_list:
             # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
             # ====>
             # https://img3.doubanio.com/view/photo/raw/public/p490571815.jpg
             raw_img_url = img_url.replace(u'thumb', u'raw')
+            print 'raw_img_url:::::', raw_img_url
             rqst_raw_img = scrapy.Request(raw_img_url, callback=self.save_img)
             rqst_raw_img.meta['path'] = path
             yield rqst_raw_img
 
-    @staticmethod
-    def save_img(response):
+        # 2nd step
+        next_page_link_xpath = '//span[@class="next"]/a/@href'
+        next_page_link = response.xpath(next_page_link_xpath).extract()
+        if next_page_link:
+            rqst_next = scrapy.Request(url=next_page_link[0], callback=self.parse_photos)  # 递归调用 parse_photos
+            rqst_next.meta['photos_dir'] = response.meta['photos_dir']
+            yield rqst_next
+
+    # def parse_img_src_list(self, img_src_list=None, path=None):
+    #     for img_url in img_src_list:
+    #         # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
+    #         # ====>
+    #         # https://img3.doubanio.com/view/photo/raw/public/p490571815.jpg
+    #         raw_img_url = img_url.replace(u'thumb', u'raw')
+    #         rqst_raw_img = scrapy.Request(raw_img_url, callback=self.save_img)
+    #         rqst_raw_img.meta['path'] = path
+    #         yield rqst_raw_img
+
+    def save_img(self, response):
+        print 'imgssssssssssssssss', response.url
         path = response.meta['path']
-        img_file_name = path + response.url.split('/')[-1]
+        img_file_name = path + '/' + response.url.split('/')[-1]
         img_file = open(img_file_name, 'wb')
         img_file.write(response.body)
         img_file.close()
 
 
     # 3rd  Step: extract awards ,  create file , save it
-    @staticmethod
-    def parse_awards(response):
+    def parse_awards(self, response):
         # parse awards
         content_xpath = '/html/body/div[3]/div[1]'
         content = response.xpath(content_xpath).extract()[0]
         content = remove_tags(content)
         awards_file = response.meta['awards_file']
-        awards_file.write(content)
+        awards_file.write(content.encode('utf8'))
         awards_file.close()
 
 
@@ -200,38 +215,46 @@ class DouBanMovie(CrawlSpider):
 
     def parse_review(self, response):
         reviews_dirs = response.meta['reviews_dirs']  # ['一星影评', '二星影评']
-        stars_class = response.xpath('//*[@id="1000369"]/div[1]/header/span[1]/@class').extract()[0]
+        stars_class_xpath = '//div[@class="article"]//header//span[contains(@class,"allstar")]/@class'
+        stars_class = response.xpath(stars_class_xpath).extract()[0]
         allstars = stars_class.split()[0]  # u'allstar50'
-        stars_num = int(allstars[-2:-1])
-        review_file_dir = reviews_dirs[stars_num - 1]
+        stars_num = int(allstars[-2:-1]) - 1 # 5-1  --> 4
+        review_file_dir = reviews_dirs[stars_num]
         review_title_xpath = '//*[@id="content"]/h1//span/text()'
-        review_title = response.xpath(review_title_xpath).extract()[0]
-        review_file_full_path = review_file_dir + '/' + review_title
+        review_title = response.xpath(review_title_xpath).extract()[0].replace('"', '')
+        review_title = self.clean_invilad_chracter(review_title)  #清除非法字符串
+        review_file_full_path = review_file_dir + '/' + review_title + '.txt'
         review_file = open(review_file_full_path, 'a')
-        author_nickname_xpath = '//*[@id="1000369"]/div[1]/header/a[1]/span/text()'
+        author_nickname_xpath = '//div[@class="article"]//header/a/span/text()'
         author_nickname = response.xpath(author_nickname_xpath).extract()[0]
-        author_icon_img_src_xpath = '//*[@id="1000369"]/a/img/@src'
+        author_icon_img_src_xpath = '//div[@class="article"]//div[@class="main"]/a/img/@src'
         #  u'https://img3.doubanio.com/icon/u1000152-14.jpg'
         author_icon_img_src = response.xpath(author_icon_img_src_xpath).extract()[0]
-        author_link_xpath = '//*[@id="1000369"]/a/@href'
+        author_link_xpath = '//div[@class="article"]//header/a[1]/@href'
         author_link = response.xpath(author_link_xpath).extract()[0]
         review_content_xpath = '//*[@id="link-report"]/div'
         review_content = response.xpath(review_content_xpath).extract()[0]
         review_content = remove_tags(review_content)
-        review_file.write(review_title + '\n')
+        review_file.write(review_title.encode('utf8') + '\n')
         review_file.write('影评链接:' + response.url + '\n')
-        review_file.write('作者昵称：' + author_nickname + '\n')
-        review_file.write('作者链接：' + author_link + '\n'*3)
-        review_file.write(review_content)
+        review_file.write('作者昵称：' + author_nickname.encode('utf8') + '\n')
+        review_file.write('作者链接：' + author_link.encode('utf8') + '\n\n\n')
+        review_file.write(review_content.encode('utf8'))
         review_file.close()
         author_icon_img_name = author_icon_img_src.split('/')[-1]
-        author_icon_img_file = open(review_file_dir + author_icon_img_name, 'wb')
+        author_icon_img_file = open(review_file_dir + '/' + author_icon_img_name, 'wb')
         rqst_author_icon = scrapy.Request(url=author_icon_img_src, callback=self.save_author_icon)
         rqst_author_icon.meta['author_icon_img_file'] = author_icon_img_file
-        return rqst_author_icon
+        yield rqst_author_icon
 
-    @staticmethod
-    def save_author_icon(response):
+    def clean_invilad_chracter(self, strings):
+        # 剔除非法字符
+        invalid_chr = r'\/:*?"<>|'
+        for chr in invalid_chr:
+            strings = strings.replace(chr, '')
+        return strings
+
+    def save_author_icon(self, response):
         author_icon_img_file = response.meta['author_icon_img_file']
         author_icon_img_file.write(response.body)
         author_icon_img_file.close()
@@ -253,48 +276,48 @@ class SetMovieFile:
         
     def create_root_dir(self):
         if not os.path.exists(self.dir_name):
-            os.mkdir(self.dir_name, mode=0o777)
+            os.mkdir(self.dir_name)  # add arguments mode=0o777 on linux
     
     def save_info_intro_grade(self):    
         # 创建电影简介.txt， 提取内容（演职人员，剧情简介），写入文件
-        intro_file_name = self.dir_name + '/' + self.movie_name + '简介.txt'
+        intro_file_name = self.dir_name + '/' + self.movie_name + u'简介.txt'
         intro_file = open(intro_file_name, 'a')
         
         #   演职人员介绍, parse_info 
         info = remove_tags(self.info) + '\n' + '#'*99 + '\n'
-        intro_file.write(info)
+        intro_file.write(info.encode('utf8'))
         #   剧情简介 parse_intro
         intro_content = remove_tags(self.intro_con)
-        intro_file.write(intro_content)
+        intro_file.write(intro_content.encode('utf8'))
         intro_file.close()
         
         # 电影评分(9.6).txt 提取链接稍微麻烦，不是重点，暂不处理
-        grade_file_name = '豆瓣评分' + '(' + str(self.grade) + ').txt'
+        grade_file_name = self.dir_name + '/' + u'豆瓣评分' + '(' + self.grade + ').txt'
         grade = open(grade_file_name, 'a')
         grade_content = remove_tags(self.grade_con).replace(' ', '')       # 去除多余空格
         grade_content = grade_content.replace(u'\u661f\n\n\n', u'\u661f:')  # 去除多余换行，保留部分 5星:81.4%
-        grade.write(grade_content)
+        grade.write(grade_content.encode('utf8'))
         grade.close()
         
     # 生成图片保存目录 ./photos， 生成奖项介绍 获奖情况.txt ， 生成影评文件夹 ./影评
     def create_photos_dir(self, ):
         self.photos_dir = self.dir_name + '/' + 'photos'
         if not os.path.exists(self.photos_dir):
-            os.mkdir(self.photos_dir, mode=0o777)
+            os.mkdir(self.photos_dir)
     
     def create_wards_file(self, ):
-        awards_file_name = self.dir_name + '/' + self.movie_name + '获奖情况.txt'
+        awards_file_name = self.dir_name + '/' + self.movie_name + u'获奖情况.txt'
         self.awards_file = open(awards_file_name, 'a')
     
     def create_reviews_dir_files(self, ):
         self.reviews_dir = self.dir_name + '/' + 'reviews'
         if not os.path.exists(self.reviews_dir):
             os.mkdir(self.reviews_dir)
-        grade_dir_list = ['一星影评', '二星影评', '三星影评', '四星影评', '五星影评', ]
+        grade_dir_list = [u'一星影评', u'二星影评', u'三星影评', u'四星影评', u'五星影评', ]
         for grade_dir in grade_dir_list:
-            grd_dir = self.reviews_dir + grade_dir  # No.1--肖申克的救赎 The Shawshank Redemption (1994)/一星影评/
-            if os.path.exists(grd_dir):
-                os.mkdir(grd_dir, mode=0o777)
+            grd_dir = self.reviews_dir + '/' + grade_dir  # No.1--肖申克的救赎 The Shawshank Redemption (1994)/一星影评/
+            if not os.path.exists(grd_dir):
+                os.mkdir(grd_dir)
                 self.reviews_dirs.append(grd_dir)  # 调用的时候先判断下位置
         
 process = CrawlerProcess()
