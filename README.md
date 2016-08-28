@@ -1,11 +1,16 @@
 # DoubanSpider
 Scrapy douban movie top250 and book top250
+
 movie top250  https://movie.douban.com/top250
+
 book top250 https://book.douban.com/top250?icn=index-book250-all
 
 For movies:
+
 download the pages, extract data like movie name,photos, description, and most important , reviews, then save them as follows:
+
 ./No.1--肖申克的救赎 The Shawshank Redemption (1994)
+    
     肖申克的救赎简介.txt  from https://movie.douban.com/subject/1292052/
         内容：
             导演:
@@ -36,10 +41,13 @@ download the pages, extract data like movie name,photos, description, and most i
 
 
 For books:
+
 download the pages, extract data like book names, photos, description, reviews and notes. then save them as follows:
+
  ./1--小王子（9.0）-[法]圣埃克苏佩里
-  小王子简介.txt
-  [法]圣埃克苏佩里简介.txt
-  小王子书评.txt
-  小王子读书笔记.txt
- （书评与书评之间，笔记与笔记之间由99个星号('*'*99)隔开）
+ 
+      小王子简介.txt
+      [法]圣埃克苏佩里简介.txt
+      小王子书评.txt
+      小王子读书笔记.txt
+     （书评与书评之间，笔记与笔记之间由99个星号('*'*99)隔开）
