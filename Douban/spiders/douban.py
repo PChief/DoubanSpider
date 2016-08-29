@@ -10,8 +10,7 @@ from scrapy.crawler import CrawlerProcess
 class DouBanMovie(CrawlSpider):
 
     name = 'doubanmovie'
-    allowed_domains = ['douban.com']
-    # start_urls = ['https://movie.douban.com/top250']
+    allowed_domains = ['douban.com', 'img3.doubanio.com']
 
     def start_requests(self):
         # start_requests 不能与Rule规则通用
@@ -21,13 +20,12 @@ class DouBanMovie(CrawlSpider):
 
     def loged_in(self, response):
         print response.url
-        # start_url = 'https://movie.douban.com/top250'  # all urls , commented when test single movie
-        start_url = 'https://movie.douban.com/subject/1292052/'
-        # return scrapy.Request(url=start_url, callback=self.parse_start_url)
-        return scrapy.Request(url=start_url, callback=self.parse_subject)
+        start_url = 'https://movie.douban.com/top250'  # all urls , commented when test single movie
+        # start_url = 'https://movie.douban.com/subject/1292052/'
+        return scrapy.Request(url=start_url, callback=self.parse_start_url)
+        # return scrapy.Request(url=start_url, callback=self.parse_subject)  # for single movie url
 
     def parse_start_url(self, response):
-        # 获取的页面由Rule规则匹配处理
         print response.url
         # extract movie urls
         movie_urls = response.xpath('//*[@id="content"]//*[@class="hd"]/a/@href').extract()
@@ -77,8 +75,7 @@ class DouBanMovie(CrawlSpider):
         rqst_reviews.meta['reviews_dirs'] = subject.reviews_dirs
         return rqst_stills_photos, rqst_poster_photos, rqst_wallpaper_photos, rqst_awards, rqst_reviews
 
-    @staticmethod
-    def parse_profile(response):
+    def parse_profile(self, response):
         # parse movie profile like Director,Actor ,extact name,links etc
         # extract profile data from subject page, return them
         rank_xpath = '/html/body/div[3]/div[1]/div[1]/span[1]/text()'
@@ -87,6 +84,7 @@ class DouBanMovie(CrawlSpider):
         title = title_year[0] + title_year[1] if len(title_year) == 2 else title_year[0]
         movie_name = title_year[0]
         dir_name = rank + '--' + title    # No.1--肖申克的救赎 The Shawshank Redemption (1994)
+        dir_name = self.clean_invilad_chracter(dir_name)
 
         info = response.xpath('//*[@id="info"]').extract()[0] # id=info 页面源码
 
@@ -125,10 +123,7 @@ class DouBanMovie(CrawlSpider):
         # 1st step
         img_src_xpath = '//*[@id="content"]/div/div[1]/ul[@class="poster-col4 clearfix"]//img/@src'
         img_src_list = response.xpath(img_src_xpath).extract()
-        print 'img_src_list length::::::', len(img_src_list)
         path = response.meta['photos_dir']
-        print 'photoes_dir ::::::',path
-        # self.parse_img_src_list(img_src_list=img_src_list, path=response.meta['photos_dir'])
         for img_url in img_src_list:
             # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
             # ====>
@@ -144,18 +139,20 @@ class DouBanMovie(CrawlSpider):
         next_page_link = response.xpath(next_page_link_xpath).extract()
         if next_page_link:
             rqst_next = scrapy.Request(url=next_page_link[0], callback=self.parse_photos)  # 递归调用 parse_photos
+            print 'Next img page link :', next_page_link[0]
             rqst_next.meta['photos_dir'] = response.meta['photos_dir']
             yield rqst_next
 
-    # def parse_img_src_list(self, img_src_list=None, path=None):
-    #     for img_url in img_src_list:
-    #         # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
-    #         # ====>
-    #         # https://img3.doubanio.com/view/photo/raw/public/p490571815.jpg
-    #         raw_img_url = img_url.replace(u'thumb', u'raw')
-    #         rqst_raw_img = scrapy.Request(raw_img_url, callback=self.save_img)
-    #         rqst_raw_img.meta['path'] = path
-    #         yield rqst_raw_img
+    def parse_img_src_list(self, img_src_list=None, path=None):
+        for img_url in img_src_list:
+            # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
+            # ====>
+            # https://img3.doubanio.com/view/photo/raw/public/p490571815.jpg
+            raw_img_url = img_url.replace(u'thumb', u'raw')
+            print 'raw_img_url:::::', raw_img_url
+            rqst_raw_img = scrapy.Request(raw_img_url, callback=self.save_img)
+            rqst_raw_img.meta['path'] = path
+            yield rqst_raw_img
 
     def save_img(self, response):
         print 'imgssssssssssssssss', response.url
@@ -216,9 +213,12 @@ class DouBanMovie(CrawlSpider):
     def parse_review(self, response):
         reviews_dirs = response.meta['reviews_dirs']  # ['一星影评', '二星影评']
         stars_class_xpath = '//div[@class="article"]//header//span[contains(@class,"allstar")]/@class'
-        stars_class = response.xpath(stars_class_xpath).extract()[0]
-        allstars = stars_class.split()[0]  # u'allstar50'
-        stars_num = int(allstars[-2:-1]) - 1 # 5-1  --> 4
+        if response.xpath(stars_class_xpath).extract()[0]:
+            stars_class = response.xpath(stars_class_xpath).extract()[0]
+            allstars = stars_class.split()[0]  # u'allstar50'
+            stars_num = int(allstars[-2:-1]) - 1 # 5-1  --> 4
+        else:
+            stars_num = 1  #如果评论中没有打星，则按照1星计算
         review_file_dir = reviews_dirs[stars_num]
         review_title_xpath = '//*[@id="content"]/h1//span/text()'
         review_title = response.xpath(review_title_xpath).extract()[0].replace('"', '')
