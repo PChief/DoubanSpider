@@ -200,7 +200,7 @@ class DouBanMovie(scrapy.Spider):
     def parse_review(self, response):
         reviews_dirs = response.meta['reviews_dirs']  # ['一星影评', '二星影评',,,]
         stars_class_xpath = '//div[@class="article"]//header//span[contains(@class,"allstar")]/@class'
-        if response.xpath(stars_class_xpath).extract()[0]:
+        if len(response.xpath(stars_class_xpath).extract()) > 0:
             stars_class = response.xpath(stars_class_xpath).extract()[0]
             allstars = stars_class.split()[0]  # u'allstar50'
             stars_num = int(allstars[-2:-1]) - 1 # 5-1  --> 4
