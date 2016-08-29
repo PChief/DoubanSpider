@@ -143,17 +143,6 @@ class DouBanMovie(CrawlSpider):
             rqst_next.meta['photos_dir'] = response.meta['photos_dir']
             yield rqst_next
 
-    def parse_img_src_list(self, img_src_list=None, path=None):
-        for img_url in img_src_list:
-            # https://img3.doubanio.com/view/photo/thumb/public/p490571815.jpg
-            # ====>
-            # https://img3.doubanio.com/view/photo/raw/public/p490571815.jpg
-            raw_img_url = img_url.replace(u'thumb', u'raw')
-            print 'raw_img_url:::::', raw_img_url
-            rqst_raw_img = scrapy.Request(raw_img_url, callback=self.save_img)
-            rqst_raw_img.meta['path'] = path
-            yield rqst_raw_img
-
     def save_img(self, response):
         print 'imgssssssssssssssss', response.url
         path = response.meta['path']
