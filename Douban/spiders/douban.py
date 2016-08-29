@@ -1,19 +1,18 @@
 # _*_ coding:utf8 _*_
 
 import scrapy
-from scrapy.spiders import CrawlSpider
 import os
 from w3lib.html import remove_tags
 from scrapy.crawler import CrawlerProcess
 
 
-class DouBanMovie(CrawlSpider):
+class DouBanMovie(scrapy.Spider):
 
     name = 'doubanmovie'
     allowed_domains = ['douban.com', 'img3.doubanio.com']
 
     def start_requests(self):
-        # start_requests 不能与Rule规则通用
+        # start_requests 不能与Rule规则同时使用
         return [scrapy.FormRequest('https://www.douban.com/accounts/login',
                                    formdata={'form_email': 'email', 'form_password': 'password'},
                                    callback=self.loged_in)]
