@@ -18,15 +18,15 @@ class DouBanMovie(scrapy.Spider):
                                    callback=self.loged_in)]
 
     def loged_in(self, response):
-        print response.url
-        start_url = 'https://movie.douban.com/top250'  # all urls , commented when test single movie
-        # start_url = 'https://movie.douban.com/subject/1292052/'
+        # 爬取所有250部电影相关信息
+        start_url = 'https://movie.douban.com/top250'
         return scrapy.Request(url=start_url, callback=self.parse_start_url)
-        # return scrapy.Request(url=start_url, callback=self.parse_subject)  # for single movie url
+        # 测试代码时只使用一个电影链接
+        # start_url = 'https://movie.douban.com/subject/1292052/'
+        # return scrapy.Request(url=start_url, callback=self.parse_subject)
 
     def parse_start_url(self, response):
-        print response.url
-        # extract movie urls
+        # 提取出所有电影链接（https://movie.douban.com/subject/1292052/）
         movie_urls = response.xpath('//*[@id="content"]//*[@class="hd"]/a/@href').extract()
         for movie_url in movie_urls:
             yield scrapy.Request(url=movie_url, callback=self.parse_subject)
@@ -37,18 +37,18 @@ class DouBanMovie(scrapy.Spider):
         if next_page_link:
             yield scrapy.Request(url=next_page_link, callback=self.parse_start_url)  # 递归调用 parse_start_url
 
-    # from top to end, extract profile, photos, awards, reviews in order
+    # 在页面由上至下，依次提取概况、评分信息、简介、图片、获奖情况、影评等信息
     # 1st Step: extract profile info ,create file , save it
     def parse_subject(self, response):
         # parse movie root url like https://movie.douban.com/subject/1292052/
-        # call parse_profile to create dir ,file, extract profile info and save them
+        # 调用 parse_profile 提取概况信息、评分信息以及简介，并保存
         subject = self.parse_profile(response)
         subject.create_root_dir()
         subject.save_info_intro_grade()
-        print response.url
+        #print response.url
 
-        # create urls base on response.url(https://movie.douban.com/subject/1292052/), request them
-        # create all_photos url , request it
+        # 基于response.url(https://movie.douban.com/subject/1292052/)生成图片、获奖情况、影评等链接,发送请求
+        # 生成三种图片链接：剧照、海报、壁纸，传入图片保存目录
         # 剧照 https://movie.douban.com/subject/1292052/photos?type=S
         stills_photos_url = response.url + 'photos?type=S'
         rqst_stills_photos = scrapy.Request(url=stills_photos_url, callback=self.parse_photos)
@@ -62,12 +62,12 @@ class DouBanMovie(scrapy.Spider):
         rqst_stills_photos.meta['photos_dir'] = subject.photos_dir
         rqst_poster_photos.meta['photos_dir'] = subject.photos_dir
         rqst_wallpaper_photos.meta['photos_dir'] = subject.photos_dir
-        # create awards url , request it
+        # 生成获奖情况链接，传入获奖情况文件
         awards_url = response.url + 'awards'   # https://movie.douban.com/subject/1292052/awards/
         subject.create_wards_file()
         rqst_awards = scrapy.Request(url=awards_url, callback=self.parse_awards)
         rqst_awards.meta['awards_file'] = subject.awards_file
-        # create reviews url , request it
+        # 生成影评链接，传入一至五星影评文件目录
         reviews_url = response.url + 'reviews'  # https://movie.douban.com/subject/1292052/reviews
         subject.create_reviews_dir_files()
         rqst_reviews = scrapy.Request(url=reviews_url, callback=self.parse_reviews)
@@ -137,13 +137,13 @@ class DouBanMovie(scrapy.Spider):
         next_page_link_xpath = '//span[@class="next"]/a/@href'
         next_page_link = response.xpath(next_page_link_xpath).extract()
         if next_page_link:
-            rqst_next = scrapy.Request(url=next_page_link[0], callback=self.parse_photos)  # 递归调用 parse_photos
+            # 递归调用 parse_photos，处理下一页中的photos链接
+            rqst_next = scrapy.Request(url=next_page_link[0], callback=self.parse_photos)  
             print 'Next img page link :', next_page_link[0]
             rqst_next.meta['photos_dir'] = response.meta['photos_dir']
             yield rqst_next
 
     def save_img(self, response):
-        print 'imgssssssssssssssss', response.url
         path = response.meta['path']
         img_file_name = path + '/' + response.url.split('/')[-1]
         img_file = open(img_file_name, 'wb')
@@ -153,7 +153,6 @@ class DouBanMovie(scrapy.Spider):
 
     # 3rd  Step: extract awards ,  create file , save it
     def parse_awards(self, response):
-        # parse awards
         content_xpath = '/html/body/div[3]/div[1]'
         content = response.xpath(content_xpath).extract()[0]
         content = remove_tags(content)
@@ -164,14 +163,14 @@ class DouBanMovie(scrapy.Spider):
 
     # 4th  Step: extract reviews , create file, save it
     def parse_reviews(self, response):
-        # Every movie has N resviews, then N%20 + [0,1] pages
+        # 每个电影共有N条影评,则有 N%20 + [0,1] 页影评
         # 有些页面会折叠评论，但链接仍然在
-        print response.url
+        # print response.url
         base_url = response.url + '?start='
 
         count_css = 'div.article div.paginator span.count::text'
         count_con = response.css(count_css).extract()[0]  # u'(\u51713995\u6761)' in 肖申克的救赎的影评
-        # extract int number N, totally N reviews, for example 3995 in 肖申克的救赎 The Shawshank Redemption
+        # 提取出影评个数，如 3995 （in 肖申克的救赎 The Shawshank Redemption）
         count = count_con.replace(u'\u5171', '').replace(u'\u6761', '').replace('(', '').replace(')', '')
         count = int(count)  # for example 3995
         review_pages_count = count/20
@@ -199,7 +198,7 @@ class DouBanMovie(scrapy.Spider):
                 yield rqst_review
 
     def parse_review(self, response):
-        reviews_dirs = response.meta['reviews_dirs']  # ['一星影评', '二星影评']
+        reviews_dirs = response.meta['reviews_dirs']  # ['一星影评', '二星影评',,,]
         stars_class_xpath = '//div[@class="article"]//header//span[contains(@class,"allstar")]/@class'
         if response.xpath(stars_class_xpath).extract()[0]:
             stars_class = response.xpath(stars_class_xpath).extract()[0]
@@ -248,7 +247,7 @@ class DouBanMovie(scrapy.Spider):
         author_icon_img_file.close()
 
 
-# get movie name ,dir_name , subject number etc, make dir and file
+# 获取电影名称等信息用于创建目录、文件
 class SetMovieFile:
     def __init__(self, dir_name, movie_name, info, grade, grade_con, intro_con):
         self.dir_name = dir_name
