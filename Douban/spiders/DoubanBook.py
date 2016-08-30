@@ -74,7 +74,37 @@ class DouBanBook(CrawlSpider):
         author_intro_xpath = ''
         
         # step 1.2 : extract book_profile , book_grade, book_intro, book_catalogue, save them
+        book_profile = response.xpath(book_profile_xpath).extract()[0]
+        book_grade = response.xpath().extract(book_grade_xpath)[0]
+        book_grade = remve_tags(book_grade)
+        book_grade_mark = ''  # (9.0)
+        book_intro = response.xpath(book_intro_xpath).extract()[0]
+        book_intro = remove_tags(book_intro)
+        book_catalogue = response.xpath(book_catalogue_xpath).extract()[0]
+        book_catalogue = remove_tags(book_catalogue)
+        
+        book_file_name = book_dir + '/' + book_dir + book_grade_mark + '.txt'
+        book_file = open(book_file_name, 'a')
+        book_file.write(
+            book_name, '\n\n',
+            book_profile, '\n\n',
+            book_grade, '\n\n',
+            book_intro, '\n\n',
+            book_catalogue, '\n\n',
+            )
+        book_file.close()
+        
         # step 1.3 : extract author intro, save it
+        author_intro_file_name = book_dir + '/' + author_name + u'简介.txt'
+        author_intro_file = open(author_intro_file_name, 'a')
+        author_intro = response.xpath(author_intro_xpath).extract()[0]
+        author_intro = remove_tags(author_intro)
+        author_intro_file.write(
+            author_name, '简介', '\n\n',
+            author_intro,
+            )
+        author_intro_file.close()
+        
         
     def parse_top250_rest(self, response):
         # for Rule matchs next page link
