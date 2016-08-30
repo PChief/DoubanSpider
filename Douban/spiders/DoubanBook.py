@@ -8,7 +8,7 @@ from scrapy.spiders imort CrawlSpider
 from scrapy.linkextractors import LinkExtractor
 
 # 爬取豆瓣读书top250 （https://book.douban.com/top250?icn=index-book250-all）
-class DoubanBook(CrawlSpider):
+class DouBanBook(CrawlSpider):
     
     name = 'doubanbook'
     allowed_domains = ['douban.com', 'doubanio.com']
@@ -36,10 +36,10 @@ class DoubanBook(CrawlSpider):
     )
     
     def parse_book_subject(self, response):
-        # extract data from book link
+        # step 1: extract data from book link
         print response.url
         
-        # 创建目录（小王子--[法]圣埃克苏佩里）前先检查目录是否存在
+        # step 1.1 : 创建目录（小王子--[法]圣埃克苏佩里）
         book_name_xpath = '//div[@id="wrapper"]/h1/span/text()'
         author_name_xpath = '//div[@id="info"]/span[1]/a/text()'
         book_name = response.xpath(book_name_xpath).extract()[0]  # u'小王子'
@@ -47,7 +47,14 @@ class DoubanBook(CrawlSpider):
         book_dir = book_name + '--' + author_name  
         if not os.path.exists(book_dir_name):
             os.mkdir(book_dir)
-        """
+        self.save_subject_profile(response=response, book_dir=book_dir, book_name=book_name, author_name=author_name)
+        
+        # step 1.4 : extract reviews_link and annotations_link, yield them
+        reviews_link_xpath = ''
+        annotations_link_xpath = '' 
+        
+    def save_subject_profile(self, response, book_dir, book_name, author_name):
+       """
         保存文件目录结构
         ./小王子--[法] 圣埃克苏佩里
             小王子-[法]圣埃克苏佩里(9.0).txt
@@ -63,12 +70,11 @@ class DoubanBook(CrawlSpider):
         book_profile_xpath = ''
         book_grade_xpath = ''
         book_intro_xpath =''
-        author_intro_xpath = ''
         book_catalogue_xpath = ''
-        reviews_link_xpath = ''
-        annotations_link_xpath = ''
+        author_intro_xpath = ''
         
-        
+        # step 1.2 : extract book_profile , book_grade, book_intro, book_catalogue, save them
+        # step 1.3 : extract author intro, save it
         
     def parse_top250_rest(self, response):
         # for Rule matchs next page link
@@ -82,3 +88,8 @@ class DoubanBook(CrawlSpider):
     def parse_annotation_next(self, response):
         # for Rule matchs next pages
         print response.url
+
+
+process = CrawlerProcess()
+process.crawl(DouBanBook)
+process.start()
