@@ -51,3 +51,17 @@ download the pages, extract data like book names, photos, description, reviews a
       小王子书评.txt
       小王子读书笔记.txt
      （书评与书评之间，笔记与笔记之间由99个星号('*'*99)隔开）
+
+保存文件示例：
+
+1）前50个电影
+
+![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E5%89%8D50%E4%B8%AA%E7%94%B5%E5%BD%B1.png)
+
+2）肖申克的救赎五星影评
+
+![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E4%BA%94%E6%98%9F%E5%BD%B1%E8%AF%84.png)
+
+3）肖申克的救赎图片（剧照、海报、壁纸）
+
+![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E5%9B%BE%E7%89%87.png)
