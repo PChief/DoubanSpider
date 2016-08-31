@@ -20,8 +20,8 @@ class DouBanBook(CrawlSpider):
     1、匹配书籍介绍的链接 (https://book.douban.com/subject/1084336/)
     依次提取：
     a）书籍概况(原始图片、基本信息div[@id="info"])
-    b）豆瓣评分(div.rating_wrap clearbox)
-    c）内容简介(div.related_info span."all hidden" div.intro)
+    b）豆瓣评分(//div[@class="rating_wrap clearbox"])
+    c）内容简介(//span[@class="all hidden"]//div[@class="intro"])
     d）作者简介((//div[@class="article"]//div[@class="related_info"]//div/div[@class="intro"])[2])
     e）目录(//div[@class="indent"][contains(@id,"short")] 或者  //*[@class="indent"][@style="display:none"])
     f) 书评链接，再进一步提取书评(//div[@id="reviews"]/div[@id="wt_0"]/p/a/@href)
@@ -50,8 +50,28 @@ class DouBanBook(CrawlSpider):
         self.save_subject_profile(response=response, book_dir=book_dir, book_name=book_name, author_name=author_name)
         
         # step 1.4 : extract reviews_link and annotations_link, yield them
-        reviews_link_xpath = ''
-        annotations_link_xpath = '' 
+        reviews_link_xpath = '//div[@id="reviews"]/div[@id="wt_0"]/p/a/@href'
+        reviews_link = response.xpath(reviews_link_xpath).extract()[0]
+        # https://book.douban.com/subject/1084336/reviews
+        reviews_dir = book_dir + '/' + 'reviews'
+        if not os.path.exists(reviews_dir):
+            os.mkdir(reviews_dir)
+        rqst_reviews_link = Request(url=reviews_link, callback=self.parse_rvws_ants)
+        rqst_reviews_link.meta['path'] = reviews_dir
+        rqst_reviews_link.meta['xpath_urls'] = '//*[@class="review-list"]//div/header/h3/a/@href'
+        rqst_reviews_link.meta['xpath_next_page'] = '//span[@class="next"]/link/@href'
+        rqst_reviews_link.meta['callback'] =self.parse_review
+        yield rqst_reviews_link
+        
+        annotations_link_xpath = '//div[@class="ugc-mod reading-notes"]/div[@class="ft"]/p/a/@href'
+        annotations_link = response.xpath(annotations_link_xpath).extract()[0]
+        # https://book.douban.com/subject/1084336/annotation
+        annotations_dir = book_dir + '/' + 'annotations'
+        if not os.path.exists(annotations):
+            os.mkdir(annotations_dir)
+        rqst_annotations_link = Request(url=annotations_link, callback=self.parse_annotations)
+        rqst_reviews_link.meta['annotations_dir'] = annotations_dir
+        yield rqst_annotations_link
         
     def save_subject_profile(self, response, book_dir, book_name, author_name):
        """
@@ -67,11 +87,13 @@ class DouBanBook(CrawlSpider):
                 5stars--《小王子》的笔记-第2页.txt
                 ...
         """
-        book_profile_xpath = ''
-        book_grade_xpath = ''
-        book_intro_xpath =''
-        book_catalogue_xpath = ''
-        author_intro_xpath = ''
+        book_profile_xpath = 'div[@id="info"]'
+        book_grade_xpath = '//div[@class="rating_wrap clearbox"]'
+        book_intro_xpath = '//span[@class="all hidden"]//div[@class="intro"]'
+        # 目录的xpath需要判断
+        book_catalogue_short_xpath = '//div[@class="indent"][contains(@id,"short")]'
+        book_catalogue_display_xpath = '//*[@class="indent"][@style="display:none"]'
+        author_intro_xpath = '//div[@class="article"]//div[@class="related_info"]//div/div[@class="intro"])[2]'
         
         # step 1.2 : extract book_profile , book_grade, book_intro, book_catalogue, save them
         book_profile = response.xpath(book_profile_xpath).extract()[0]
@@ -86,11 +108,11 @@ class DouBanBook(CrawlSpider):
         book_file_name = book_dir + '/' + book_dir + book_grade_mark + '.txt'
         book_file = open(book_file_name, 'a')
         book_file.write(
-            book_name, '\n\n',
-            book_profile, '\n\n',
-            book_grade, '\n\n',
-            book_intro, '\n\n',
-            book_catalogue, '\n\n',
+            book_name + '\n\n' +
+            book_profile + '\n\n' +
+            book_grade + '\n\n' +
+            book_intro + '\n\n' +
+            book_catalogue + '\n\n'
             )
         book_file.close()
         
@@ -100,11 +122,51 @@ class DouBanBook(CrawlSpider):
         author_intro = response.xpath(author_intro_xpath).extract()[0]
         author_intro = remove_tags(author_intro)
         author_intro_file.write(
-            author_name, '简介', '\n\n',
-            author_intro,
+            author_name + u'简介' + '\n\n' +
+            author_intro
             )
         author_intro_file.close()
+    
+    def parse_rvws_ants(self, response):
+        """
+        参数说明
+        path: 保存书评文件、笔记文件的目录
+        xpath_urls: 用于提取页面中review或者annotation的URL列表
+        xpath_next_page: 用于提取下一页的链接后缀，需要加上base_url才能访问
+        callback: 请求单个review或者annotation页面的回调函数
+        """
+        print response.url
+        rvws_uants_url_list_xpath = response.meta['xpath_urls']
+        rvws_uants_url_list = response.xpath(rvws_uants_url_list_xpath).extract()
+        for rvw_uant_url in rvws_uants_url_list:
+            rqst = Request(url=rvw_uant_url, callback=response.meta['callback'])
+                rqst.meta['path'] = response.meta['path']
+                yield rqst
         
+        # parse next reviews page
+        base_url = response.url.split('?')[0]
+        next_page_url_xpath = response.meta['xpath_next_page']
+        next_page_url = response.xpath(next_page_url_xpath).extract()
+        if next_page_url:
+            next_page_url = base_url + next_page_url[0]
+            # 递归调用自身
+            rqst_next_page = Request(url=next_page_url, callback=self.parse_rvws_ants)
+            rqst_next_page.meta['path'] = response.meta['path']
+            rqst_next_page.meta['xpath_urls'] = response.meta['xpath_urls']
+            rqst_next_page.meta['xpath_next_page'] = response.meta['xpath_next_page']
+            rqst_next_page.meta['callback'] = response.meta['callback']
+            yield rqst_next_page
+    
+    def parse_annotations(self, response):
+        print response.url
+        path = response.meta['annotations_dir']
+    
+        
+    def parse_review(self, response):
+        print response.url
+    
+    def parse_annotation(self, response):
+        print response.url
         
     def parse_top250_rest(self, response):
         # for Rule matchs next page link
