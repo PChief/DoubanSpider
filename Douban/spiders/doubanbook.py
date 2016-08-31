@@ -175,15 +175,16 @@ class DouBanBook(CrawlSpider):
         for annotation_raw in annotations_raw:
             """
             保存内容：
-            title  div[@class="con"]/div[@class="nlst"]/h3/a/text()
+            title       div[@class="con"]/div[@class="nlst"]/h3/a/text()
             title_link  div[@class="con"]/div[@class="nlst"]/h3/a/@href
-            author  div[@class="ilst"]/a/img/@alt
+            author      div[@class="ilst"]/a/img/@alt
             author_link div[@class="ilst"]/a/@href
             author_icon_img_src  div[@class="ilst"]/a/img/@href
                 https://img3.doubanio.com/icon/u3393285-50.jpg
                 https://img3.doubanio.com/icon/ul3393285-50.jpg
-            grade div[@class="con"]/div[@class="clst"]/p[@class="user"]/span/@class --> allstar40
-            content div[@class="all hidden"] 剔除内容里面的不相干内容，如“回应”二字
+            grade       div[@class="con"]/div[@class="clst"]/p[@class="user"]/span/@class --> allstar40
+            content     div[@class="all hidden"] 
+            剔除内容里面的不相干内容，如“回应”二字
             """
             title = ''
             title_link = ''
@@ -209,6 +210,37 @@ class DouBanBook(CrawlSpider):
         
     def parse_review(self, response):
         print response.url
+        """
+        提取内容；
+        title       //span[@property="v:summary"]/text()
+        title_link  response.url
+        author      //span[@property="v:reviewer"]/text()
+        author_link  //header/a[1]/@href
+        author_icon_img_src  //a[@class="avatar author-avatar left"]/img/@src
+        grade      //span[contains(@class,"main-title-rating")]/@class  "allstar50 main-title-rating"
+        content    //div[@property="v:description"]
+        (content 在remove_tags时保留a标签，或者提取出里面的链接，注意换行，避免所有文本拥挤在一个地方)
+        """
+        title = ''
+        title_link = ''
+        author = ''
+        author_link = ''
+        author_icon_img_src_xpath = 'div[@class="ilst"]/a/img/@href'
+        author_icon_img_src = annotation_raw.xpath(author_icon_img_src_xpath).extract()[0]
+        author_icon_img_src = author_icon_img_src.replace('icon/u', 'icon/u1')  # 替换为大图链接 
+        grade = ''
+        content = ''  # 处理content
+            
+        review_file_name = path + '/' + title + '--' + 'author' + '--' + grade + '.txt'
+        review_file = open(annotation_file_name, 'a')
+        review_file.write(
+                
+                
+                )
+        review_file.close()
+        rqst_author_icon = Request(url=author_icon_img_src, callback=self.save_author_icon)
+        rqst_author_icon.meta['path'] = path
+        yield rqst_author_icon
     
     def save_author_icon(self, response):
         path = response.meta['path']
