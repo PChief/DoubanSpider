@@ -25,8 +25,9 @@ class DouBanBook(CrawlSpider):
     d）作者简介((//div[@class="article"]//div[@class="related_info"]//div/div[@class="intro"])[2])
     e）目录(//div[@class="indent"][contains(@id,"short")] 或者  //*[@class="indent"][@style="display:none"])
     f) 书评链接，再进一步提取书评(//div[@id="reviews"]/div[@id="wt_0"]/p/a/@href)
+    书评必须访问书评链接才能提取书评内容
     g) 笔记链接，再进一步提取笔记(//div[@class="ugc-mod reading-notes"]/div[@class="ft"]/p/a/@href)
-    
+    笔记可以在页面中找到隐藏的项目，进而可以直接提取出来内容
     """
     rules = (
         # 以书目介绍链接（ttps://book.douban.com/subject/1084336/）为起点
@@ -69,8 +70,11 @@ class DouBanBook(CrawlSpider):
         annotations_dir = book_dir + '/' + 'annotations'
         if not os.path.exists(annotations):
             os.mkdir(annotations_dir)
-        rqst_annotations_link = Request(url=annotations_link, callback=self.parse_annotations)
-        rqst_reviews_link.meta['annotations_dir'] = annotations_dir
+        rqst_annotations_link = Request(url=annotations_link, callback=self.parse_rvws_ants)
+        rqst_annotations_link.meta['path'] = annotations_dir
+        rqst_annotations_link.meta['xpath_urls'] = None # 直接从页面中提取内容
+        rqst_annotations_link.meta['xpath_next_page'] = '//span[@class="next"]/link/@href'
+        rqst_annotations_link.meta['callback'] = None
         yield rqst_annotations_link
         
     def save_subject_profile(self, response, book_dir, book_name, author_name):
@@ -131,23 +135,33 @@ class DouBanBook(CrawlSpider):
         """
         参数说明
         path: 保存书评文件、笔记文件的目录
-        xpath_urls: 用于提取页面中review或者annotation的URL列表
+        xpath_urls: 用于提取页面中review的URL列表，笔记不需要
         xpath_next_page: 用于提取下一页的链接后缀，需要加上base_url才能访问
-        callback: 请求单个review或者annotation页面的回调函数
+        callback: 请求单个review页面的回调函数，笔记不需要
         """
         print response.url
-        rvws_uants_url_list_xpath = response.meta['xpath_urls']
-        rvws_uants_url_list = response.xpath(rvws_uants_url_list_xpath).extract()
-        for rvw_uant_url in rvws_uants_url_list:
-            rqst = Request(url=rvw_uant_url, callback=response.meta['callback'])
-                rqst.meta['path'] = response.meta['path']
-                yield rqst
+        
+        if response.meta['xpath_urls']:
+            # 提取review的链接，再进一步提取内容
+            rvws_uants_url_list_xpath = response.meta['xpath_urls']
+            rvws_uants_url_list = response.xpath(rvws_uants_url_list_xpath).extract()
+            for rvw_uant_url in rvws_uants_url_list:
+                rqst = Request(url=rvw_uant_url, callback=response.meta['callback'])
+                    rqst.meta['path'] = response.meta['path']
+                    yield rqst
+        else:
+            # 提取笔记内容，保存
+            annotations_xpath = '//li[@class="ctsh clearfix"]'
+            # 每页最多十个，均为li标签的原始内容
+            annotations_raw = response.xpath(annotations_xpath).extract()
+            self.extract_annotation(annotations_raw=annotations_raw, path=response.meta['path'])
         
         # parse next reviews page
         base_url = response.url.split('?')[0]
         next_page_url_xpath = response.meta['xpath_next_page']
         next_page_url = response.xpath(next_page_url_xpath).extract()
         if next_page_url:
+            # 如果列表为空，说明没有下一页
             next_page_url = base_url + next_page_url[0]
             # 递归调用自身
             rqst_next_page = Request(url=next_page_url, callback=self.parse_rvws_ants)
@@ -157,25 +171,55 @@ class DouBanBook(CrawlSpider):
             rqst_next_page.meta['callback'] = response.meta['callback']
             yield rqst_next_page
     
-    def parse_annotations(self, response):
-        print response.url
-        path = response.meta['annotations_dir']
+    def extract_annotation(annotations_raw, path):
+        for annotation_raw in annotations_raw:
+            """
+            保存内容：
+            title  div[@class="con"]/div[@class="nlst"]/h3/a/text()
+            title_link  div[@class="con"]/div[@class="nlst"]/h3/a/@href
+            author  div[@class="ilst"]/a/img/@alt
+            author_link div[@class="ilst"]/a/@href
+            author_icon_img_src  div[@class="ilst"]/a/img/@href
+                https://img3.doubanio.com/icon/u3393285-50.jpg
+                https://img3.doubanio.com/icon/ul3393285-50.jpg
+            grade div[@class="con"]/div[@class="clst"]/p[@class="user"]/span/@class --> allstar40
+            content div[@class="all hidden"] 剔除内容里面的不相干内容，如“回应”二字
+            """
+            title = ''
+            title_link = ''
+            author = ''
+            author_link = ''
+            author_icon_img_src_xpath = 'div[@class="ilst"]/a/img/@href'
+            author_icon_img_src = annotation_raw.xpath(author_icon_img_src_xpath).extract()[0]
+            author_icon_img_src = author_icon_img_src.replace('icon/u', 'icon/u1')  # 替换为大图链接 
+            grade = ''
+            content = ''  # 处理content
+            
+            annotation_file_name = path + '/' + title + '--' + 'author' + '--' + grade + '.txt'
+            annotation_file = open(annotation_file_name, 'a')
+            annotation_file.write(
+                
+                
+                )
+            annotation_file.close()
+            rqst_author_icon = Request(url=author_icon_img_src, callback=self.save_author_icon)
+            rqst_author_icon.meta['path'] = path
+            yield rqst_author_icon
     
         
     def parse_review(self, response):
         print response.url
     
-    def parse_annotation(self, response):
-        print response.url
+    def save_author_icon(self, response):
+        path = response.meta['path']
+        icon_file_name = path + '/' + response.url.split('/')[-1]
+        icon_file = open(icon_file_name, 'wb')
+        icon_file.write(response.body)
+        icon_file.close()
         
     def parse_top250_rest(self, response):
         # for Rule matchs next page link
         print response.url
-        
-    def parse_subject_annotation(self, response):
-        # extract annotations from page
-        print response.url  # https://book.douban.com/subject/1084336/annotation
-        
         
     def parse_annotation_next(self, response):
         # for Rule matchs next pages
