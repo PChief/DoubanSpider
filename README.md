@@ -19,15 +19,15 @@ download the pages, extract data like movie name,photos, description, and most i
             编剧: 
                     弗兰克·德拉邦特
                     斯蒂芬·金
-           主演: 
+            主演:
                     蒂姆·罗宾斯
                     摩根·弗里曼
                     鲍勃·冈顿
                     ......
-          剧情简介：
+            剧情简介：
                  20世纪40年代末，小有成就的青年银行家安迪（蒂姆·罗宾斯 Tim Robbins 饰）因涉嫌杀害妻子及她的情人而锒铛入狱。
                         .......
-           获奖情况(https://movie.douban.com/subject/1292052/awards/)：
+        肖申克的救赎获奖情况.txt  (https://movie.douban.com/subject/1292052/awards/)：
                  第67届奥斯卡金像奖(link) 最佳影片(提名)   尼基·马文  (link)
                  .......
         豆瓣评分(9.6).txt     from https://movie.douban.com/subject/1292052/

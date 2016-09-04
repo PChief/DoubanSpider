@@ -20,12 +20,12 @@ NEWSPIDER_MODULE = 'Douban.spiders'
 
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64; rv:38.0) Gecko/20100101 Firefox/38.0'
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS=2
+CONCURRENT_REQUESTS=16
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY=10
+DOWNLOAD_DELAY=5
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN=16
 #CONCURRENT_REQUESTS_PER_IP=16
@@ -53,6 +53,8 @@ DEFAULT_REQUEST_HEADERS = {
 #DOWNLOADER_MIDDLEWARES = {
 #    'Douban.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
+# 避免因为重复爬取过滤一些请求
+DUPEFILTER_CLASS = 'scrapy.dupefilter.BaseDupeFilter'
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html

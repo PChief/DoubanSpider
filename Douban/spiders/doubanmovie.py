@@ -32,9 +32,9 @@ class DouBanMovie(scrapy.Spider):
             yield scrapy.Request(url=movie_url, callback=self.parse_subject)
 
         next_page_link_xpath = '//span[@class="next"]/a/@href'
-        next_page_link = response.xpath(next_page_link_xpath).extract()[0]
-        next_page_link = response.url + next_page_link
+        next_page_link = response.xpath(next_page_link_xpath).extract()
         if next_page_link:
+            next_page_link = response.url + next_page_link[0]
             yield scrapy.Request(url=next_page_link, callback=self.parse_start_url)  # 递归调用 parse_start_url
 
     # 在页面由上至下，依次提取概况、评分信息、简介、图片、获奖情况、影评等信息
