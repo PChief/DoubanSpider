@@ -45,7 +45,6 @@ class DouBanMovie(scrapy.Spider):
         subject = self.parse_profile(response)
         subject.create_root_dir()
         subject.save_info_intro_grade()
-        #print response.url
 
         # 基于response.url(https://movie.douban.com/subject/1292052/)生成图片、获奖情况、影评等链接,发送请求
         # 生成三种图片链接：剧照、海报、壁纸，传入图片保存目录
@@ -85,7 +84,7 @@ class DouBanMovie(scrapy.Spider):
         dir_name = rank + '--' + title    # No.1--肖申克的救赎 The Shawshank Redemption (1994)
         dir_name = self.clean_invilad_chracter(dir_name)
 
-        info = response.xpath('//*[@id="info"]').extract()[0] # id=info 页面源码
+        info = response.xpath('//*[@id="info"]').extract()[0]  # id=info 页面源码
 
         grade_xpath = '/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/div[1]/div[2]/strong/text()'
         grade = response.xpath(grade_xpath).extract()[0]  # u'9.6'  pass to class SetMovieFile
@@ -93,7 +92,7 @@ class DouBanMovie(scrapy.Spider):
         grade_con = response.xpath('/html/body/div[3]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]').extract()[0]
         
         intro_xpath = '//*[@id="link-report"]/span[@class="all hidden"]/text()'
-        intro_content = response.xpath(intro_xpath).extract()  #有的简介比较长，处于隐藏状态
+        intro_content = response.xpath(intro_xpath).extract()  # 有的简介比较长，处于隐藏状态
         intro_con = ''
         if intro_content:
             for intro_co in intro_content:
@@ -103,7 +102,6 @@ class DouBanMovie(scrapy.Spider):
             intro_con = response.xpath(intro_xpath).extract()[0]
         subject = SetMovieFile(dir_name, movie_name, info, grade, grade_con, intro_con)
         return subject
-
 
     # 2nd  Step: extract photos, create directory , download and save images
     def parse_photos(self, response):
@@ -143,23 +141,23 @@ class DouBanMovie(scrapy.Spider):
             rqst_next.meta['photos_dir'] = response.meta['photos_dir']
             yield rqst_next
 
-    def save_img(self, response):
+    @staticmethod
+    def save_img(response):
         path = response.meta['path']
         img_file_name = path + '/' + response.url.split('/')[-1]
         img_file = open(img_file_name, 'wb')
         img_file.write(response.body)
         img_file.close()
 
-
     # 3rd  Step: extract awards ,  create file , save it
-    def parse_awards(self, response):
+    @staticmethod
+    def parse_awards(response):
         content_xpath = '/html/body/div[3]/div[1]'
         content = response.xpath(content_xpath).extract()[0]
         content = remove_tags(content)
         awards_file = response.meta['awards_file']
         awards_file.write(content.encode('utf8'))
         awards_file.close()
-
 
     # 4th  Step: extract reviews , create file, save it
     def parse_reviews(self, response):
@@ -203,13 +201,13 @@ class DouBanMovie(scrapy.Spider):
         if len(response.xpath(stars_class_xpath).extract()) > 0:
             stars_class = response.xpath(stars_class_xpath).extract()[0]
             allstars = stars_class.split()[0]  # u'allstar50'
-            stars_num = int(allstars[-2:-1]) - 1 # 5-1  --> 4
+            stars_num = int(allstars[-2:-1]) - 1  # 5-1  --> 4
         else:
-            stars_num = 1  #如果评论中没有打星，则按照1星计算
+            stars_num = 1  # 如果评论中没有打星，则按照1星计算
         review_file_dir = reviews_dirs[stars_num]
         review_title_xpath = '//*[@id="content"]/h1//span/text()'
         review_title = response.xpath(review_title_xpath).extract()[0].replace('"', '')
-        review_title = self.clean_invilad_chracter(review_title)  #清除非法字符串
+        review_title = self.clean_invilad_chracter(review_title)  # 清除非法字符串
         review_file_full_path = review_file_dir + '/' + review_title + '.txt'
         review_file = open(review_file_full_path, 'a')
         author_nickname_xpath = '//div[@class="article"]//header/a/span/text()'
@@ -234,14 +232,16 @@ class DouBanMovie(scrapy.Spider):
         rqst_author_icon.meta['author_icon_img_file'] = author_icon_img_file
         yield rqst_author_icon
 
-    def clean_invilad_chracter(self, strings):
+    @staticmethod
+    def clean_invilad_chracter(strings):
         # 剔除非法字符
         invalid_chr = r'\/:*?"<>|'
-        for chr in invalid_chr:
-            strings = strings.replace(chr, '')
+        for chract in invalid_chr:
+            strings = strings.replace(chract, '')
         return strings
 
-    def save_author_icon(self, response):
+    @staticmethod
+    def save_author_icon(response):
         author_icon_img_file = response.meta['author_icon_img_file']
         author_icon_img_file.write(response.body)
         author_icon_img_file.close()
