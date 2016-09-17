@@ -5,6 +5,7 @@ import os
 from w3lib.html import remove_tags
 from scrapy.crawler import CrawlerProcess
 
+
 # 爬取豆瓣读书top250 （https://book.douban.com/top250?icn=index-book250-all）
 class DouBanBook(scrapy.Spider):
     
@@ -19,7 +20,8 @@ class DouBanBook(scrapy.Spider):
                   'https://book.douban.com/top250?start=150',
                   'https://book.douban.com/top250?start=175',
                   'https://book.douban.com/top250?start=200',
-                  'https://book.douban.com/top250?start=225',]
+                  'https://book.douban.com/top250?start=225',
+                  ]
     # start_urls = ['https://book.douban.com/subject/1084336/']  # 测试用开始链接，小王子
 
     """
@@ -64,7 +66,7 @@ class DouBanBook(scrapy.Spider):
         reviews_dir = book_dir + '/' + 'reviews'
         if not os.path.exists(reviews_dir):
             os.mkdir(reviews_dir)
-        print '*'*50,reviews_link
+        print '*'*50, reviews_link
         rqst_reviews_link = scrapy.Request(url=reviews_link, callback=self.parse_rvws_ants, dont_filter=True)
         rqst_reviews_link.meta['path'] = reviews_dir
         rqst_reviews_link.meta['xpath_urls'] = '//*[@class="review-list"]//div/header/h3/a/@href'
@@ -81,7 +83,9 @@ class DouBanBook(scrapy.Spider):
             annotations_dir = book_dir + '/' + 'annotations'
             if not os.path.exists(annotations_dir):
                 os.mkdir(annotations_dir)
-            rqst_annotations_link = scrapy.Request(url=annotations_link, callback=self.parse_rvws_ants, dont_filter=True)
+            rqst_annotations_link = scrapy.Request(url=annotations_link,
+                                                   callback=self.parse_rvws_ants,
+                                                   dont_filter=True)
             rqst_annotations_link.meta['path'] = annotations_dir
             rqst_annotations_link.meta['xpath_urls'] = None  # 直接从页面中提取内容
             rqst_annotations_link.meta['xpath_next_page'] = '//span[@class="next"]/link/@href'
@@ -142,11 +146,10 @@ class DouBanBook(scrapy.Spider):
 
         book_file_name = book_dir + '/' + book_dir + '(' + book_grade_mark + ').txt'
         book_file = open(book_file_name, 'a')
-        write_book_con = book_name + '\n\n' + \
-                         book_profile + '\n\n' + \
-                         book_grade + '\n\n' + \
-                         book_intro + '\n\n' + \
-                         book_catalogue + '\n\n'
+        write_book_con = '\n\n'.join((book_name,
+                                      book_grade,
+                                      book_intro,
+                                      book_catalogue))
         book_file.write(write_book_con.encode('utf8'))
         book_file.close()
         
@@ -207,9 +210,7 @@ class DouBanBook(scrapy.Spider):
             rqst_next_page.meta['xpath_next_page'] = response.meta['xpath_next_page']
             rqst_next_page.meta['callback'] = response.meta['callback']
             yield rqst_next_page
-    
 
-        
     def parse_review(self, response):
         print response.url
         """
@@ -229,9 +230,9 @@ class DouBanBook(scrapy.Spider):
         author_name = response.xpath('//span[@property="v:reviewer"]/text()').extract()[0]
         author_name = self.clean_invilad_chracter(author_name)
         author_link = response.xpath('//header/a[1]/@href').extract()[0]
-        author_icon_img_src_xpath = '//a[@class="avatar author-avatar left"]/img/@src'
-        author_icon_img_src = response.xpath(author_icon_img_src_xpath).extract()[0]
-        author_icon_img_src = author_icon_img_src.replace('icon/u', 'icon/ul')  # 替换为大图链接
+        # author_icon_img_src_xpath = '//a[@class="avatar author-avatar left"]/img/@src'
+        # author_icon_img_src = response.xpath(author_icon_img_src_xpath).extract()[0]
+        # author_icon_img_src = author_icon_img_src.replace('icon/u', 'icon/ul')  # 替换为大图链接
         try:
             grade = response.xpath('//span[contains(@class,"main-title-rating")]/@class').extract()[0]
             grade = grade.split()[0][-2:-1]  # u'5'
@@ -242,16 +243,16 @@ class DouBanBook(scrapy.Spider):
         path = response.meta['path']
         review_file_name = path + '/' + title + '--' + author_name + '--' + grade + 'stars.txt'
         review_file = open(review_file_name, 'a')
-        review_con = title + '\n' + \
-                     title_link + '\n' +\
-                     u'作者:' + author_name + '\n' +\
-                     u'作者链接: ' + author_link + '\n\n' + \
-                     content
+        review_con = '\n'.join((title,
+                                title_link,
+                                u'作者:' + author_name,
+                                u'作者链接: ' + author_link,
+                                content))
         review_file.write(review_con.encode('utf8'))
         review_file.close()
-        rqst_author_icon = scrapy.Request(url=author_icon_img_src, callback=self.save_author_icon, dont_filter=True)
-        rqst_author_icon.meta['path'] = path
-        yield rqst_author_icon
+        # rqst_author_icon = scrapy.Request(url=author_icon_img_src, callback=self.save_author_icon, dont_filter=True)
+        # rqst_author_icon.meta['path'] = path
+        # yield rqst_author_icon
 
     def extract_annotation(self, annotations_raw, path):
         for annotation_raw in annotations_raw:
@@ -279,8 +280,8 @@ class DouBanBook(scrapy.Spider):
             author = ann_sel.xpath('//div[@class="clst"]/p/a/text()').extract()[0]
             author = self.clean_invilad_chracter(author)
             author_link = ann_sel.xpath('//div[@class="clst"]/p/a/@href').extract()[0]
-            author_icon_img_src_xpath = '//div[@class="ilst"]/a/img/@src'
-            author_icon_img_src = ann_sel.xpath(author_icon_img_src_xpath).extract()[0]
+            # author_icon_img_src_xpath = '//div[@class="ilst"]/a/img/@src'
+            # author_icon_img_src = ann_sel.xpath(author_icon_img_src_xpath).extract()[0]
             try:
                 grade = ann_sel.xpath('//div[@class="clst"]/p/span/@class').extract()[0]
                 grade = grade.split()[0][-2:-1]  # u'5'
@@ -296,15 +297,16 @@ class DouBanBook(scrapy.Spider):
 
             annotation_file_name = path + '/' + title + '--' + author + '--' + grade + '.txt'
             annotation_file = open(annotation_file_name, 'a')
-            annata_wire_con = title + '\n' + \
-                              title_link + '\n' + \
-                              u'作者： ' + author + '\n' + \
-                              u'作者链接：' + author_link + \
-                              content
+            annata_wire_con = '\n'.join((title,
+                                         title_link,
+                                         u'作者： ' + author,
+                                         u'作者链接：' + author_link,
+                                         content))
             annotation_file.write(annata_wire_con.encode('utf8'))
             annotation_file.close()
     
-    def save_author_icon(self, response):
+    @staticmethod
+    def save_author_icon(response):
         path = response.meta['path']
         # 有的头像为小图，转为大图链接后，响应的返回值为404，scrapy自动丢弃不处理了
         icon_file_name = path + '/' + response.url.split('/')[-1]
@@ -312,7 +314,8 @@ class DouBanBook(scrapy.Spider):
         icon_file.write(response.body)
         icon_file.close()
 
-    def remove_needless_sysmbols(self, text=''):
+    @staticmethod
+    def remove_needless_sysmbols(text=''):
         # 删除多余的符号，默认删除多余的'\n' '/r/n'
         text = text.replace('\r\n', '\r').replace('\n ', ' ')
         for sysmbol in [' ', '\r', '\n', ]:
@@ -321,11 +324,12 @@ class DouBanBook(scrapy.Spider):
                 text = text.replace(double_sysmbols, sysmbol)
         return text
 
-    def clean_invilad_chracter(self, strings, invalid_chr=r'\/:*?"<>|'):
+    @staticmethod
+    def clean_invilad_chracter(chractors, invalid_chr=r'\/:*?"<>|'):
         # 剔除非法字符
-        for chr in invalid_chr:
-            strings = strings.replace(chr, '')
-        return strings
+        for chract in invalid_chr:
+            chractors = chractors.replace(chract, '')
+        return chractors
 
 process = CrawlerProcess()
 process.crawl(DouBanBook)
