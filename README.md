@@ -9,7 +9,7 @@
 
 **For movies:**
 
-download the pages, extract data like movie name,photos, description, and most important , reviews, then save them as follows:
+Download the pages, extract data like movie name,photos, description, and most important , reviews, then save them as follows:
 
 
     ./No.1--肖申克的救赎 The Shawshank Redemption (1994)
@@ -45,7 +45,7 @@ download the pages, extract data like movie name,photos, description, and most i
 
 **For books:**
 
-download the pages, extract data like book names, photos, description, reviews and notes. then save them as follows:
+Download the pages, extract data like book names, photos, description, reviews and notes. then save them as follows:
 
      ./1--小王子（9.0）-[法]圣埃克苏佩里
  
