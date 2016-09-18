@@ -67,7 +67,7 @@ download the pages, extract data like book names, photos, description, reviews a
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E5%89%8D50%E4%B8%AA%E7%94%B5%E5%BD%B1.png)
 
-2）The Shawshank Redemption/肖申克的救赎五星影评
+2）The Shawshank Redemption/肖申克的救赎
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E4%BA%94%E6%98%9F%E5%BD%B1%E8%AF%84.png)
 
