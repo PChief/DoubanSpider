@@ -51,11 +51,11 @@ download the pages, extract data like book names, photos, description, reviews a
  
         小王子简介.txt
         [法]圣埃克苏佩里简介.txt
-        ./小王子书评
+        ./reviews
             书评1.txt
             书评2.txt
             ...
-        ./小王子读书笔记
+        ./annotations
             笔记1.txt
             笔记2.txt
             ...
@@ -67,14 +67,14 @@ download the pages, extract data like book names, photos, description, reviews a
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E5%89%8D50%E4%B8%AA%E7%94%B5%E5%BD%B1.png)
 
-2）肖申克的救赎五星影评/The Shawshank Redemption
+2）The Shawshank Redemption/肖申克的救赎五星影评
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E4%BA%94%E6%98%9F%E5%BD%B1%E8%AF%84.png)
 
-3）肖申克的救赎图片（剧照、海报、壁纸）/Photoes for The Shawshank Redemption
+3）Photoes for The Shawshank Redemption/肖申克的救赎图片（剧照、海报、壁纸）
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E5%9B%BE%E7%89%87.png)
 
-4) 豆瓣读书-1988我想和这个世界谈谈/ Douban book
+4)  Douban book/豆瓣读书-1988我想和这个世界谈谈
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%B1%86%E7%93%A3%E8%AF%BB%E4%B9%A6-1988%E6%88%91%E6%83%B3%E5%92%8C%E8%BF%99%E4%B8%AA%E4%B8%96%E7%95%8C%E8%B0%88%E8%B0%88.png)
