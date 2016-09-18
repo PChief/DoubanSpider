@@ -1,11 +1,13 @@
 # DoubanSpider
-Scrapy douban movie top250 and book top250
+
+
+**Scrape douban movie top250 and book top250**
 
    movie top250  https://movie.douban.com/top250
 
    book top250 https://book.douban.com/top250?icn=index-book250-all
 
-For movies:
+**For movies:**
 
 download the pages, extract data like movie name,photos, description, and most important , reviews, then save them as follows:
 
@@ -41,7 +43,7 @@ download the pages, extract data like movie name,photos, description, and most i
         ./imgs   (from  https://movie.douban.com/subject/1292052/photos?type=S&start=40&sortby=vote&size=a&subtype=a)
 
 
-For books:
+**For books:**
 
 download the pages, extract data like book names, photos, description, reviews and notes. then save them as follows:
 
@@ -59,20 +61,20 @@ download the pages, extract data like book names, photos, description, reviews a
             ...
      
 
-保存文件示例：
+**Examples for saved files：**
 
-1）前50个电影
+1）Top50 movie
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E5%89%8D50%E4%B8%AA%E7%94%B5%E5%BD%B1.png)
 
-2）肖申克的救赎五星影评
+2）肖申克的救赎五星影评/The Shawshank Redemption
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E4%BA%94%E6%98%9F%E5%BD%B1%E8%AF%84.png)
 
-3）肖申克的救赎图片（剧照、海报、壁纸）
+3）肖申克的救赎图片（剧照、海报、壁纸）/Photoes for The Shawshank Redemption
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%82%96%E7%94%B3%E5%85%8B%E7%9A%84%E6%95%91%E8%B5%8E%E5%9B%BE%E7%89%87.png)
 
-4) 豆瓣读书-1988我想和这个世界谈谈
+4) 豆瓣读书-1988我想和这个世界谈谈/ Douban book
 
 ![image](https://github.com/PChief/DoubanSpider/blob/master/Douban/imgs/%E8%B1%86%E7%93%A3%E8%AF%BB%E4%B9%A6-1988%E6%88%91%E6%83%B3%E5%92%8C%E8%BF%99%E4%B8%AA%E4%B8%96%E7%95%8C%E8%B0%88%E8%B0%88.png)
